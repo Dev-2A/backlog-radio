@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: oklch(0.16 0.02 270);
+  --color-surface: oklch(0.22 0.025 270);
+  --color-surface-hover: oklch(0.27 0.03 270);
+  --color-border: oklch(0.32 0.02 270);
+  --color-text: oklch(0.96 0.01 270);
+  --color-text-muted: oklch(0.65 0.02 270);
+  --color-accent: oklch(0.78 0.14 200);
+  --color-accent-hover: oklch(0.84 0.13 200);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

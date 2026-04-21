@@ -1,6 +1,7 @@
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { PlayerProvider } from "@/components/player/PlayerProvider";
 
 export const metadata = {
   title: "📻 Backlog Radio",
@@ -12,9 +13,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ko">
       <body className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <PlayerProvider>
+          <Header />
+          <main className="flex-1 pb-24">{children}</main>
+          <Footer />
+        </PlayerProvider>
       </body>
     </html>
   );

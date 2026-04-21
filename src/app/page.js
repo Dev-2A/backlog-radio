@@ -8,16 +8,37 @@ import BacklogStats from "@/components/steam/BacklogStats";
 import LibraryGrid from "@/components/steam/LibraryGrid";
 import Spinner from "@/components/ui/Spinner";
 import OstPanel from "@/components/player/OstPanel";
-import TempPlayer from "@/components/player/TempPlayer";
+import { usePlayer } from "@/components/player/PlayerProvider";
 import useLibrary from "@/hooks/useLibrary";
 
 export default function Home() {
   const [profile, setProfile] = useState(null);
   const [selectedGame, setSelectedGame] = useState(null);
-  const [selectedVideo, setSelectedVideo] = useState(null);
 
   const steamId = profile?.isPublic ? profile.steamId : null;
   const { data: library, loading, error } = useLibrary(steamId);
+  const { playVideo } = usePlayer();
+
+  const handlePlayOst = (video) => {
+    // 1) 플레이어에 로드 명령
+    playVideo(video.videoId);
+
+    // 2) 미니 플레이어에 메타데이터 전달 (커스텀 이벤트)
+    window.dispatchEvent(
+      new CustomEvent("backlog-radio:meta", {
+        detail: {
+          videoId: video.videoId,
+          title: video.title,
+          channel: video.channel,
+          thumbnail: video.thumbnail,
+          gameName: selectedGame?.name ?? null,
+        },
+      }),
+    );
+
+    // 3) 패널 닫기
+    setSelectedGame(null);
+  };
 
   return (
     <Container className="py-12 sm:py-20">
@@ -111,7 +132,9 @@ export default function Home() {
           <div className="mt-12 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]">
               <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse"></span>
-              <span>Step 7 · OST 검색 패널 완료 · Next: YouTube 플레이어</span>
+              <span>
+                Step 8 · 실제 YouTube 플레이어 연결 완료 · Next: 재생 큐
+              </span>
             </div>
           </div>
         </>
@@ -121,16 +144,7 @@ export default function Home() {
       <OstPanel
         game={selectedGame}
         onClose={() => setSelectedGame(null)}
-        onPlay={(video) => {
-          setSelectedVideo(video);
-          setSelectedGame(null); // 패널 닫음
-        }}
-      />
-
-      {/* 임시 재생 토스트 (Step 8에서 진짜 플레이어로 교체) */}
-      <TempPlayer
-        video={selectedVideo}
-        onClose={() => setSelectedVideo(null)}
+        onPlay={handlePlayOst}
       />
     </Container>
   );

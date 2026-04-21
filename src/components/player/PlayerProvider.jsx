@@ -5,17 +5,17 @@ import useYouTubePlayer from "@/hooks/useYouTubePlayer";
 import useQueue from "@/hooks/useQueue";
 import { YT_STATE } from "@/lib/youtubePlayer";
 import MiniPlayer from "./MiniPlayer";
+import KeyboardShortcuts from "./KeyboardShortcuts";
 
 const PlayerContext = createContext(null);
 
 export function PlayerProvider({ children }) {
-  // ⚡ 핵심: id 대신 ref로 래퍼 지정
   const wrapperRef = useRef(null);
   const player = useYouTubePlayer(wrapperRef);
   const queue = useQueue();
-
   const lastPlayedRef = useRef(null);
 
+  // 큐의 현재 아이템이 바뀌면 자동 재생
   useEffect(() => {
     if (!player.ready) return;
     const item = queue.currentItem;
@@ -39,6 +39,7 @@ export function PlayerProvider({ children }) {
     }
   }, [player.ready, queue.currentItem, player]);
 
+  // 영상 종료 시 다음 곡
   useEffect(() => {
     if (player.state === YT_STATE.ENDED) {
       queue.next();
@@ -74,7 +75,7 @@ export function PlayerProvider({ children }) {
         addToQueue,
       }}
     >
-      {/* ⚡ 핵심: id 제거하고 ref로 참조. 이 래퍼는 React가 관리. */}
+      {/* 플레이어 래퍼 — 화면 밖에 숨겨둠 (음악만 들림) */}
       <div
         ref={wrapperRef}
         aria-hidden="true"
@@ -87,7 +88,10 @@ export function PlayerProvider({ children }) {
           pointerEvents: "none",
         }}
       />
+
       {children}
+
+      <KeyboardShortcuts />
       <MiniPlayer />
     </PlayerContext.Provider>
   );

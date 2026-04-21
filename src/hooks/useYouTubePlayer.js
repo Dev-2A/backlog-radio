@@ -33,9 +33,7 @@ export default function useYouTubePlayer(wrapperRef) {
           return;
         }
 
-        // ⚡ 핵심: React가 관리하지 않는 "내부 div"를 직접 만들어 넣음.
-        // YouTube API는 이 내부 div를 iframe으로 교체하게 됨.
-        // React는 바깥 래퍼만 알기 때문에 충돌 없음.
+        // React가 관리하지 않는 내부 div를 만들어 YouTube에 넘김
         innerTarget = document.createElement("div");
         wrapper.appendChild(innerTarget);
 
@@ -96,8 +94,6 @@ export default function useYouTubePlayer(wrapperRef) {
       cancelled = true;
       if (pollTimer) clearInterval(pollTimer);
 
-      // ⚡ 핵심: player.destroy()가 iframe을 알아서 제거.
-      // 그 후 래퍼 안에 남은 빈 노드(있다면)도 안전하게 비워줌.
       if (
         playerRef.current &&
         typeof playerRef.current.destroy === "function"
@@ -110,7 +106,6 @@ export default function useYouTubePlayer(wrapperRef) {
         playerRef.current = null;
       }
 
-      // 혹시 남은 자식(innerTarget이 iframe으로 교체되지 않은 상태)을 정리
       const wrapper = wrapperRef.current;
       if (wrapper) {
         while (wrapper.firstChild) {

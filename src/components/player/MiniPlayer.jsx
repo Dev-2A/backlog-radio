@@ -99,7 +99,7 @@ export default function MiniPlayer() {
             <span>{formatDuration(Math.floor(duration))}</span>
           </div>
 
-          {/* 재생 컨트롤 — 이전 / 재생 / 다음 */}
+          {/* 재생 컨트롤 */}
           <div className="flex items-center gap-1">
             <button
               onClick={playPrev}
@@ -109,7 +109,6 @@ export default function MiniPlayer() {
             >
               ⏮
             </button>
-
             <button
               onClick={togglePlay}
               disabled={!!error}
@@ -124,7 +123,6 @@ export default function MiniPlayer() {
                 "▶"
               )}
             </button>
-
             <button
               onClick={playNext}
               disabled={!hasNext}
@@ -135,7 +133,7 @@ export default function MiniPlayer() {
             </button>
           </div>
 
-          {/* 셔플 / 반복 (태블릿 이상에서만) */}
+          {/* 셔플/반복 */}
           <div className="hidden md:flex items-center gap-1">
             <button
               onClick={() => setShuffle(!shuffle)}
@@ -163,7 +161,7 @@ export default function MiniPlayer() {
             </button>
           </div>
 
-          {/* 볼륨 (데스크톱만) */}
+          {/* 볼륨 */}
           <div className="hidden md:flex items-center gap-1">
             <button
               onClick={toggleMute}

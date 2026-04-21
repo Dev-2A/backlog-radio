@@ -9,13 +9,13 @@ import MiniPlayer from "./MiniPlayer";
 const PlayerContext = createContext(null);
 
 export function PlayerProvider({ children }) {
-  const player = useYouTubePlayer("yt-player-container");
+  // ⚡ 핵심: id 대신 ref로 래퍼 지정
+  const wrapperRef = useRef(null);
+  const player = useYouTubePlayer(wrapperRef);
   const queue = useQueue();
 
-  // 마지막으로 명령한 videoId — 같은 영상 중복 로드 방지
   const lastPlayedRef = useRef(null);
 
-  // 큐의 현재 아이템이 바뀌면 자동으로 재생
   useEffect(() => {
     if (!player.ready) return;
     const item = queue.currentItem;
@@ -25,7 +25,6 @@ export function PlayerProvider({ children }) {
       lastPlayedRef.current = item.videoId;
       player.playVideo(item.videoId);
 
-      // 미니 플레이어용 메타데이터 브로드캐스트
       window.dispatchEvent(
         new CustomEvent("backlog-radio:meta", {
           detail: {
@@ -40,14 +39,12 @@ export function PlayerProvider({ children }) {
     }
   }, [player.ready, queue.currentItem, player]);
 
-  // 영상 종료 시 다음 곡 자동 재생
   useEffect(() => {
     if (player.state === YT_STATE.ENDED) {
       queue.next();
     }
   }, [player.state, queue]);
 
-  /** 외부(페이지)에서 호출할 통합 재생 함수 */
   const playVideos = (items, startIndex = 0) => {
     queue.replaceQueue(items, startIndex);
   };
@@ -77,8 +74,9 @@ export function PlayerProvider({ children }) {
         addToQueue,
       }}
     >
+      {/* ⚡ 핵심: id 제거하고 ref로 참조. 이 래퍼는 React가 관리. */}
       <div
-        id="yt-player-container"
+        ref={wrapperRef}
         aria-hidden="true"
         style={{
           position: "fixed",

@@ -5,9 +5,9 @@ import { loadYouTubeIframeApi, YT_STATE } from "@/lib/youtubePlayer";
 
 /**
  * YouTube 영상을 재생하는 훅.
- * @param {string} containerId — iframe을 심을 div의 id (unique)
+ * @param {React.RefObject<HTMLDivElement>} wrapperRef — iframe을 심을 래퍼 div의 ref
  */
-export default function useYouTubePlayer(containerId) {
+export default function useYouTubePlayer(wrapperRef) {
   const playerRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [state, setState] = useState(YT_STATE.UNSTARTED);
@@ -18,23 +18,28 @@ export default function useYouTubePlayer(containerId) {
   const [currentVideoId, setCurrentVideoId] = useState(null);
   const [error, setError] = useState(null);
 
-  // 플레이어 초기화 (컴포넌트 마운트 시 한 번)
   useEffect(() => {
     let cancelled = false;
     let pollTimer = null;
+    let innerTarget = null;
 
     loadYouTubeIframeApi()
       .then((YT) => {
         if (cancelled) return;
 
-        // container가 실제로 존재하는지 확인
-        const el = document.getElementById(containerId);
-        if (!el) {
-          setError("플레이어 컨테이너를 찾을 수 없습니다.");
+        const wrapper = wrapperRef.current;
+        if (!wrapper) {
+          setError("플레이어 래퍼를 찾을 수 없습니다.");
           return;
         }
 
-        playerRef.current = new YT.Player(containerId, {
+        // ⚡ 핵심: React가 관리하지 않는 "내부 div"를 직접 만들어 넣음.
+        // YouTube API는 이 내부 div를 iframe으로 교체하게 됨.
+        // React는 바깥 래퍼만 알기 때문에 충돌 없음.
+        innerTarget = document.createElement("div");
+        wrapper.appendChild(innerTarget);
+
+        playerRef.current = new YT.Player(innerTarget, {
           height: "100%",
           width: "100%",
           playerVars: {
@@ -60,7 +65,6 @@ export default function useYouTubePlayer(containerId) {
             },
             onError: (e) => {
               if (cancelled) return;
-              // 에러 코드: 2=invalid, 5=html5, 100=notfound, 101/150=embed disabled
               const messages = {
                 2: "영상 요청이 잘못되었습니다.",
                 5: "HTML5 플레이어 오류가 발생했습니다.",
@@ -78,20 +82,22 @@ export default function useYouTubePlayer(containerId) {
         setError(err.message);
       });
 
-    // 현재 재생 시간 폴링 (1초마다)
     pollTimer = setInterval(() => {
       const p = playerRef.current;
       if (!p || typeof p.getCurrentTime !== "function") return;
       try {
         setCurrentTime(p.getCurrentTime() || 0);
       } catch {
-        // 플레이어 파괴 중 호출되는 경우 무시
+        // noop
       }
     }, 1000);
 
     return () => {
       cancelled = true;
       if (pollTimer) clearInterval(pollTimer);
+
+      // ⚡ 핵심: player.destroy()가 iframe을 알아서 제거.
+      // 그 후 래퍼 안에 남은 빈 노드(있다면)도 안전하게 비워줌.
       if (
         playerRef.current &&
         typeof playerRef.current.destroy === "function"
@@ -99,15 +105,26 @@ export default function useYouTubePlayer(containerId) {
         try {
           playerRef.current.destroy();
         } catch {
-          // 이미 파괴된 경우 무시
+          // noop
         }
         playerRef.current = null;
       }
+
+      // 혹시 남은 자식(innerTarget이 iframe으로 교체되지 않은 상태)을 정리
+      const wrapper = wrapperRef.current;
+      if (wrapper) {
+        while (wrapper.firstChild) {
+          try {
+            wrapper.removeChild(wrapper.firstChild);
+          } catch {
+            break;
+          }
+        }
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [containerId]);
+  }, []);
 
-  // 영상 재생 명령
   const playVideo = useCallback(
     (videoId) => {
       const p = playerRef.current;

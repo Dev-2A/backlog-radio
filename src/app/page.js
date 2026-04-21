@@ -6,12 +6,13 @@ import SteamIdInput from "@/components/steam/SteamIdInput";
 import ProfileCard from "@/components/steam/ProfileCard";
 import BacklogStats from "@/components/steam/BacklogStats";
 import LibraryGrid from "@/components/steam/LibraryGrid";
+import WeeklyPick from "@/components/steam/WeeklyPick";
 import Spinner from "@/components/ui/Spinner";
 import OstPanel from "@/components/player/OstPanel";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import useLibrary from "@/hooks/useLibrary";
+import { fetchTopOstPerGame } from "@/lib/ostBatch";
 
-// YouTube 검색 결과 → 큐 아이템 변환 (게임 메타 포함)
 function toQueueItem(video, game) {
   return {
     videoId: video.videoId,
@@ -27,28 +28,45 @@ function toQueueItem(video, game) {
 export default function Home() {
   const [profile, setProfile] = useState(null);
   const [selectedGame, setSelectedGame] = useState(null);
+  const [weeklyError, setWeeklyError] = useState(null);
 
   const steamId = profile?.isPublic ? profile.steamId : null;
   const { data: library, loading, error } = useLibrary(steamId);
   const { playVideos, addToQueue } = usePlayer();
 
-  /** 카드 클릭 → 이 곡부터 큐 덮어쓰고 재생 */
   const handlePlayOst = (video, videos, startIndex) => {
     const items = videos.map((v) => toQueueItem(v, selectedGame));
     playVideos(items, startIndex);
     setSelectedGame(null);
   };
 
-  /** "전체 큐에 추가" 버튼 → 현재 큐 뒤에 이어붙이기 */
   const handleEnqueueAll = (videos, game) => {
     const items = videos.map((v) => toQueueItem(v, game));
     addToQueue(items);
     setSelectedGame(null);
   };
 
+  const handlePlayWeeklyAll = async (games) => {
+    setWeeklyError(null);
+    const results = await fetchTopOstPerGame(games);
+
+    if (results.length === 0) {
+      setWeeklyError("세 게임 모두 OST를 찾지 못했어요. 개별로 탐색해볼까요?");
+      return;
+    }
+
+    const items = results.map(({ game, video }) => toQueueItem(video, game));
+    playVideos(items, 0);
+
+    if (results.length < games.length) {
+      setWeeklyError(
+        `${games.length}개 중 ${results.length}개의 OST만 찾았어요. 나머지는 개별로 탐색해보세요.`,
+      );
+    }
+  };
+
   return (
     <Container className="py-12 sm:py-20">
-      {/* Hero */}
       {!profile && (
         <section className="text-center max-w-3xl mx-auto mb-12">
           <div className="text-7xl mb-8">📻</div>
@@ -123,14 +141,30 @@ export default function Home() {
       {profile?.isPublic && library && (
         <>
           <BacklogStats stats={library.stats} />
-          <div className="mt-12">
+
+          <div className="mt-16">
+            <WeeklyPick
+              library={library}
+              steamId={profile.steamId}
+              onFindOst={setSelectedGame}
+              onPlayAll={handlePlayWeeklyAll}
+            />
+          </div>
+
+          {weeklyError && (
+            <div className="max-w-3xl mx-auto -mt-8 mb-8 px-4 py-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm">
+              ⚠️ {weeklyError}
+            </div>
+          )}
+
+          <div className="mt-4">
             <LibraryGrid library={library} onFindOst={setSelectedGame} />
           </div>
 
           <div className="mt-12 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]">
               <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse"></span>
-              <span>Step 9 · 재생 큐 완료 · Next: 이번 주의 백로그</span>
+              <span>Step 10 · 이번 주의 백로그 완료 · Next: 작업 모드</span>
             </div>
           </div>
         </>

@@ -5,19 +5,24 @@ import Container from "@/components/layout/Container";
 import SteamIdInput from "@/components/steam/SteamIdInput";
 import ProfileCard from "@/components/steam/ProfileCard";
 import BacklogStats from "@/components/steam/BacklogStats";
+import LibraryGrid from "@/components/steam/LibraryGrid";
 import Spinner from "@/components/ui/Spinner";
 import useLibrary from "@/hooks/useLibrary";
 
 export default function Home() {
   const [profile, setProfile] = useState(null);
 
-  // 프로필이 공개 상태일 때만 라이브러리 페칭
   const steamId = profile?.isPublic ? profile.steamId : null;
   const { data: library, loading, error } = useLibrary(steamId);
 
+  const handleFindOst = (game) => {
+    // Step 7에서 실제 OST 검색 패널로 교체됨
+    alert(`🎵 "${game.name}"의 OST를 찾을 예정 (Step 7에서 구현)`);
+  };
+
   return (
     <Container className="py-12 sm:py-20">
-      {/* Hero (프로필 로드 전에만 풀사이즈로 표시) */}
+      {/* Hero */}
       {!profile && (
         <section className="text-center max-w-3xl mx-auto mb-12">
           <div className="text-7xl mb-8">📻</div>
@@ -50,7 +55,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* Feature Preview — 프로필 로드 전에만 */}
+      {/* Feature Preview */}
       {!profile && (
         <section className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
           {[
@@ -84,30 +89,35 @@ export default function Home() {
         </section>
       )}
 
-      {/* 프로필 공개 + 라이브러리 로딩 중 */}
+      {/* Loading */}
       {profile?.isPublic && loading && (
         <Spinner label="라이브러리를 불러오는 중…" />
       )}
 
-      {/* 프로필 공개 + 라이브러리 에러 */}
+      {/* Error */}
       {profile?.isPublic && error && (
         <div className="max-w-xl mx-auto mt-6 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
           ⚠️ {error}
         </div>
       )}
 
-      {/* 프로필 공개 + 라이브러리 로드 완료 */}
+      {/* Library */}
       {profile?.isPublic && library && (
-        <section className="mt-4">
+        <>
           <BacklogStats stats={library.stats} />
+          <div className="mt-12">
+            <LibraryGrid library={library} onFindOst={handleFindOst} />
+          </div>
 
-          <div className="mt-10 text-center">
+          <div className="mt-12 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]">
               <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse"></span>
-              <span>Step 4 · 백로그 분류 완료 · Next: 게임 카드 그리드</span>
+              <span>
+                Step 5 · 라이브러리 그리드 완료 · Next: YouTube OST 검색
+              </span>
             </div>
           </div>
-        </section>
+        </>
       )}
     </Container>
   );

@@ -11,32 +11,38 @@ import OstPanel from "@/components/player/OstPanel";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import useLibrary from "@/hooks/useLibrary";
 
+// YouTube 검색 결과 → 큐 아이템 변환 (게임 메타 포함)
+function toQueueItem(video, game) {
+  return {
+    videoId: video.videoId,
+    title: video.title,
+    channel: video.channel,
+    thumbnail: video.thumbnail,
+    durationSeconds: video.durationSeconds,
+    gameName: game?.name ?? null,
+    appId: game?.appId ?? null,
+  };
+}
+
 export default function Home() {
   const [profile, setProfile] = useState(null);
   const [selectedGame, setSelectedGame] = useState(null);
 
   const steamId = profile?.isPublic ? profile.steamId : null;
   const { data: library, loading, error } = useLibrary(steamId);
-  const { playVideo } = usePlayer();
+  const { playVideos, addToQueue } = usePlayer();
 
-  const handlePlayOst = (video) => {
-    // 1) 플레이어에 로드 명령
-    playVideo(video.videoId);
+  /** 카드 클릭 → 이 곡부터 큐 덮어쓰고 재생 */
+  const handlePlayOst = (video, videos, startIndex) => {
+    const items = videos.map((v) => toQueueItem(v, selectedGame));
+    playVideos(items, startIndex);
+    setSelectedGame(null);
+  };
 
-    // 2) 미니 플레이어에 메타데이터 전달 (커스텀 이벤트)
-    window.dispatchEvent(
-      new CustomEvent("backlog-radio:meta", {
-        detail: {
-          videoId: video.videoId,
-          title: video.title,
-          channel: video.channel,
-          thumbnail: video.thumbnail,
-          gameName: selectedGame?.name ?? null,
-        },
-      }),
-    );
-
-    // 3) 패널 닫기
+  /** "전체 큐에 추가" 버튼 → 현재 큐 뒤에 이어붙이기 */
+  const handleEnqueueAll = (videos, game) => {
+    const items = videos.map((v) => toQueueItem(v, game));
+    addToQueue(items);
     setSelectedGame(null);
   };
 
@@ -46,19 +52,16 @@ export default function Home() {
       {!profile && (
         <section className="text-center max-w-3xl mx-auto mb-12">
           <div className="text-7xl mb-8">📻</div>
-
           <h1 className="text-5xl sm:text-6xl font-bold mb-6 tracking-tight">
             안 한 게임의 OST부터,
             <br />
             <span className="text-[var(--color-accent)]">부드럽게</span>.
           </h1>
-
           <p className="text-lg text-[var(--color-text-muted)] mb-4 leading-relaxed">
             Steam 라이브러리에서 구매했지만 거의 안 한 게임들의 사운드트랙을
             <br />
             자동으로 찾아 작업 BGM 플레이리스트로 만들어 드려요.
           </p>
-
           <p className="text-sm text-[var(--color-text-muted)] mb-12">
             &quot;이 음악 좋네, 게임도 한번 해볼까?&quot; — 백로그 정복의 가장
             부드러운 시작.
@@ -66,7 +69,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Input 또는 Profile */}
       <section className="mb-12">
         {profile ? (
           <ProfileCard profile={profile} onReset={() => setProfile(null)} />
@@ -75,7 +77,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* Feature Preview */}
       {!profile && (
         <section className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
           {[
@@ -109,19 +110,16 @@ export default function Home() {
         </section>
       )}
 
-      {/* Loading */}
       {profile?.isPublic && loading && (
         <Spinner label="라이브러리를 불러오는 중…" />
       )}
 
-      {/* Error */}
       {profile?.isPublic && error && (
         <div className="max-w-xl mx-auto mt-6 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
           ⚠️ {error}
         </div>
       )}
 
-      {/* Library */}
       {profile?.isPublic && library && (
         <>
           <BacklogStats stats={library.stats} />
@@ -132,19 +130,17 @@ export default function Home() {
           <div className="mt-12 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]">
               <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse"></span>
-              <span>
-                Step 8 · 실제 YouTube 플레이어 연결 완료 · Next: 재생 큐
-              </span>
+              <span>Step 9 · 재생 큐 완료 · Next: 이번 주의 백로그</span>
             </div>
           </div>
         </>
       )}
 
-      {/* OST 패널 */}
       <OstPanel
         game={selectedGame}
         onClose={() => setSelectedGame(null)}
         onPlay={handlePlayOst}
+        onEnqueueAll={handleEnqueueAll}
       />
     </Container>
   );

@@ -5,10 +5,9 @@ import OstResultCard from "./OstResultCard";
 import Spinner from "@/components/ui/Spinner";
 import useOstSearch from "@/hooks/useOstSearch";
 
-export default function OstPanel({ game, onClose, onPlay }) {
+export default function OstPanel({ game, onClose, onPlay, onEnqueueAll }) {
   const { videos, loading, error } = useOstSearch(game);
 
-  // ESC 키로 닫기
   useEffect(() => {
     if (!game) return;
     const onKey = (e) => {
@@ -18,7 +17,6 @@ export default function OstPanel({ game, onClose, onPlay }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [game, onClose]);
 
-  // 패널 열렸을 때 body 스크롤 락
   useEffect(() => {
     if (!game) return;
     const original = document.body.style.overflow;
@@ -32,15 +30,12 @@ export default function OstPanel({ game, onClose, onPlay }) {
 
   return (
     <>
-      {/* 배경 오버레이 */}
       <div
         className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
-      {/* 우측 패널 */}
       <aside className="fixed right-0 top-0 bottom-0 z-50 w-full sm:w-[480px] bg-[var(--color-bg)] border-l border-[var(--color-border)] shadow-2xl flex flex-col animate-slide-in">
-        {/* 헤더 */}
         <div className="flex-shrink-0 p-5 border-b border-[var(--color-border)]">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex-1 min-w-0">
@@ -59,13 +54,20 @@ export default function OstPanel({ game, onClose, onPlay }) {
           </div>
 
           {videos && videos.length > 0 && (
-            <div className="text-xs text-[var(--color-text-muted)]">
-              {videos.length}개의 후보 · 점수 높은 순
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs text-[var(--color-text-muted)]">
+                {videos.length}개의 후보 · 점수 높은 순
+              </div>
+              <button
+                onClick={() => onEnqueueAll(videos, game)}
+                className="px-3 py-1.5 rounded-lg bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/30 text-[var(--color-accent)] text-xs font-medium hover:bg-[var(--color-accent)]/20 transition-colors"
+              >
+                + 전체 큐에 추가
+              </button>
             </div>
           )}
         </div>
 
-        {/* 본문 */}
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
           {loading && <Spinner label="OST를 찾는 중…" />}
 
@@ -91,12 +93,11 @@ export default function OstPanel({ game, onClose, onPlay }) {
               key={video.videoId}
               video={video}
               rank={i + 1}
-              onPlay={onPlay}
+              onPlay={(v) => onPlay(v, videos, i)}
             />
           ))}
         </div>
 
-        {/* 푸터 */}
         <div className="flex-shrink-0 p-4 border-t border-[var(--color-border)] text-[10px] text-[var(--color-text-muted)] text-center">
           YouTube Data API · 저작권은 각 업로더에 귀속
         </div>

@@ -6,6 +6,7 @@ import { usePlayer } from "@/components/player/PlayerProvider";
 import { getHistoryStats } from "@/lib/history";
 import { getCacheStats, clearOstCache } from "@/lib/ostCache";
 import { formatDuration } from "@/lib/youtube";
+import { toast } from "@/lib/toast";
 
 export default function StatsPage() {
   const [stats, setStats] = useState(null);
@@ -37,6 +38,7 @@ export default function StatsPage() {
       return;
     clearOstCache();
     refresh();
+    toast.info("OST 캐시를 비웠어요");
   };
 
   if (!mounted || !stats) {

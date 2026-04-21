@@ -12,6 +12,7 @@ import OstPanel from "@/components/player/OstPanel";
 import { usePlayer } from "@/components/player/PlayerProvider";
 import useLibrary from "@/hooks/useLibrary";
 import { fetchTopOstPerGame } from "@/lib/ostBatch";
+import { toast } from "@/lib/toast";
 
 function toQueueItem(video, game) {
   return {
@@ -44,6 +45,9 @@ export default function Home() {
     const items = videos.map((v) => toQueueItem(v, game));
     addToQueue(items);
     setSelectedGame(null);
+    toast.success(
+      `🎵 ${game.name} 사운드트랙 ${items.length}곡을 큐에 추가했어요`,
+    );
   };
 
   const handlePlayWeeklyAll = async (games) => {
@@ -59,9 +63,11 @@ export default function Home() {
     playVideos(items, 0);
 
     if (results.length < games.length) {
-      setWeeklyError(
-        `${games.length}개 중 ${results.length}개의 OST만 찾았어요. 나머지는 개별로 탐색해보세요.`,
+      toast.info(
+        `${results.length}개 OST를 찾았어요 · ${games.length - results.length}개는 검색 실패`,
       );
+    } else {
+      toast.success(`${results.length}곡의 OST를 재생 큐에 준비했어요`);
     }
   };
 
@@ -70,14 +76,16 @@ export default function Home() {
       {!profile && (
         <section className="text-center max-w-3xl mx-auto mb-12">
           <div className="text-7xl mb-8">📻</div>
-          <h1 className="text-5xl sm:text-6xl font-bold mb-6 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 tracking-tight">
             안 한 게임의 OST부터,
             <br />
             <span className="text-[var(--color-accent)]">부드럽게</span>.
           </h1>
-          <p className="text-lg text-[var(--color-text-muted)] mb-4 leading-relaxed">
-            Steam 라이브러리에서 구매했지만 거의 안 한 게임들의 사운드트랙을
-            <br />
+          <p className="text-base sm:text-lg text-[var(--color-text-muted)] mb-4 leading-relaxed px-2">
+            Steam 라이브러리에서 구매했지만 거의 안 한 게임들의 사운드트랙을{" "}
+            <span className="hidden sm:inline">
+              <br />
+            </span>
             자동으로 찾아 작업 BGM 플레이리스트로 만들어 드려요.
           </p>
           <p className="text-sm text-[var(--color-text-muted)] mb-12">

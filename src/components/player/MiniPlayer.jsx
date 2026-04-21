@@ -33,6 +33,7 @@ export default function MiniPlayer() {
 
   const [currentMeta, setCurrentMeta] = useState(null);
   const [queueOpen, setQueueOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const onMetaChange = (e) => setCurrentMeta(e.detail);
@@ -53,7 +54,7 @@ export default function MiniPlayer() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-[var(--color-surface)] border-t border-[var(--color-border)] backdrop-blur-md">
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-[var(--color-surface)]/95 border-t border-[var(--color-border)] backdrop-blur-md">
         {/* 진행 바 */}
         <div
           className="h-1 bg-[var(--color-bg)] cursor-pointer group"
@@ -65,26 +66,26 @@ export default function MiniPlayer() {
           />
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2 sm:gap-3">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3">
           {/* 썸네일 + 타이틀 */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             {currentMeta?.thumbnail && (
               <img
                 src={currentMeta.thumbnail}
                 alt=""
-                className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0"
               />
             )}
             <div className="min-w-0 flex-1">
-              <div className="font-medium text-sm truncate">
+              <div className="font-medium text-xs sm:text-sm truncate leading-tight">
                 {currentMeta?.title ?? "재생 중…"}
               </div>
-              <div className="text-xs text-[var(--color-text-muted)] truncate">
+              <div className="text-[10px] sm:text-xs text-[var(--color-text-muted)] truncate mt-0.5">
                 {currentMeta?.gameName
                   ? `🎮 ${currentMeta.gameName}`
                   : (currentMeta?.channel ?? "")}
                 {queue.length > 1 && (
-                  <span className="ml-2 opacity-70">
+                  <span className="ml-1.5 opacity-70">
                     · {currentIndex + 1}/{queue.length}
                   </span>
                 )}
@@ -92,19 +93,19 @@ export default function MiniPlayer() {
             </div>
           </div>
 
-          {/* 시간 (데스크톱만) */}
-          <div className="hidden lg:flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-mono">
+          {/* 시간 (데스크톱 대형만) */}
+          <div className="hidden xl:flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-mono">
             <span>{formatDuration(Math.floor(currentTime))}</span>
             <span>/</span>
             <span>{formatDuration(Math.floor(duration))}</span>
           </div>
 
           {/* 재생 컨트롤 */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             <button
               onClick={playPrev}
               disabled={!hasPrev}
-              className="w-9 h-9 rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors flex items-center justify-center text-base disabled:opacity-30 disabled:cursor-not-allowed"
+              className="hidden sm:flex w-9 h-9 rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors items-center justify-center text-base disabled:opacity-30 disabled:cursor-not-allowed"
               aria-label="이전"
             >
               ⏮
@@ -112,7 +113,7 @@ export default function MiniPlayer() {
             <button
               onClick={togglePlay}
               disabled={!!error}
-              className="w-11 h-11 rounded-full bg-[var(--color-accent)] text-[var(--color-bg)] flex items-center justify-center text-lg font-bold hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[var(--color-accent)] text-[var(--color-bg)] flex items-center justify-center text-base sm:text-lg font-bold hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label={isPlaying ? "일시정지" : "재생"}
             >
               {isBuffering ? (
@@ -133,7 +134,7 @@ export default function MiniPlayer() {
             </button>
           </div>
 
-          {/* 셔플/반복 */}
+          {/* 셔플/반복 (태블릿 이상) */}
           <div className="hidden md:flex items-center gap-1">
             <button
               onClick={() => setShuffle(!shuffle)}
@@ -161,7 +162,7 @@ export default function MiniPlayer() {
             </button>
           </div>
 
-          {/* 볼륨 */}
+          {/* 볼륨 (데스크톱만) */}
           <div className="hidden md:flex items-center gap-1">
             <button
               onClick={toggleMute}
@@ -176,12 +177,23 @@ export default function MiniPlayer() {
               max="100"
               value={muted ? 0 : volume}
               onChange={(e) => changeVolume(Number(e.target.value))}
-              className="w-20 accent-[var(--color-accent)]"
+              className="w-16 lg:w-20 accent-[var(--color-accent)]"
               aria-label="볼륨"
             />
           </div>
 
-          {/* 큐 열기 */}
+          {/* 모바일용 "더보기" 토글 */}
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className={`md:hidden w-9 h-9 rounded-lg bg-[var(--color-surface-hover)] hover:bg-[var(--color-border)] transition-colors flex items-center justify-center text-sm ${
+              expanded ? "text-[var(--color-accent)]" : ""
+            }`}
+            aria-label="더보기"
+          >
+            ⋯
+          </button>
+
+          {/* 큐 */}
           <button
             onClick={() => setQueueOpen(true)}
             className="w-9 h-9 rounded-lg bg-[var(--color-surface-hover)] hover:bg-[var(--color-border)] transition-colors flex items-center justify-center text-sm relative"
@@ -196,6 +208,47 @@ export default function MiniPlayer() {
             )}
           </button>
         </div>
+
+        {/* 모바일 확장 영역 */}
+        {expanded && (
+          <div className="md:hidden px-3 pb-3 flex items-center gap-2 border-t border-[var(--color-border)] pt-2">
+            <button
+              onClick={() => setShuffle(!shuffle)}
+              className={`flex-1 h-9 rounded-lg transition-colors flex items-center justify-center gap-1 text-xs ${
+                shuffle
+                  ? "bg-[var(--color-accent)]/20 text-[var(--color-accent)]"
+                  : "bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]"
+              }`}
+            >
+              🔀 셔플
+            </button>
+            <button
+              onClick={() => setRepeat(!repeat)}
+              className={`flex-1 h-9 rounded-lg transition-colors flex items-center justify-center gap-1 text-xs ${
+                repeat
+                  ? "bg-[var(--color-accent)]/20 text-[var(--color-accent)]"
+                  : "bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]"
+              }`}
+            >
+              🔁 반복
+            </button>
+            <button
+              onClick={toggleMute}
+              className="w-9 h-9 rounded-lg bg-[var(--color-surface-hover)] hover:bg-[var(--color-border)] transition-colors flex items-center justify-center"
+            >
+              {muted || volume === 0 ? "🔇" : volume < 50 ? "🔉" : "🔊"}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={muted ? 0 : volume}
+              onChange={(e) => changeVolume(Number(e.target.value))}
+              className="flex-1 accent-[var(--color-accent)]"
+              aria-label="볼륨"
+            />
+          </div>
+        )}
 
         {error && (
           <div className="px-4 py-2 bg-red-500/10 text-red-400 text-xs text-center border-t border-red-500/30">

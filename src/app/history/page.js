@@ -6,6 +6,7 @@ import { usePlayer } from "@/components/player/PlayerProvider";
 import { getHistory, clearHistory } from "@/lib/history";
 import { formatDuration } from "@/lib/youtube";
 import { formatRelativeTime } from "@/lib/format";
+import { toast } from "@/lib/toast";
 
 export default function HistoryPage() {
   const [history, setHistory] = useState([]);
@@ -67,6 +68,7 @@ export default function HistoryPage() {
       return;
     clearHistory();
     setHistory([]);
+    toast.info("히스토리를 비웠어요");
   };
 
   return (

@@ -164,7 +164,7 @@ export default function Home() {
           <div className="mt-12 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]">
               <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse"></span>
-              <span>Step 10 · 이번 주의 백로그 완료 · Next: 작업 모드</span>
+              <span>Step 12 · 히스토리 + 캐시 완료 · Next: UI 폴리싱</span>
             </div>
           </div>
         </>

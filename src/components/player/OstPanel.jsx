@@ -6,7 +6,7 @@ import Spinner from "@/components/ui/Spinner";
 import useOstSearch from "@/hooks/useOstSearch";
 
 export default function OstPanel({ game, onClose, onPlay, onEnqueueAll }) {
-  const { videos, loading, error } = useOstSearch(game);
+  const { videos, loading, error, fromCache } = useOstSearch(game);
 
   useEffect(() => {
     if (!game) return;
@@ -55,8 +55,16 @@ export default function OstPanel({ game, onClose, onPlay, onEnqueueAll }) {
 
           {videos && videos.length > 0 && (
             <div className="flex items-center justify-between gap-2">
-              <div className="text-xs text-[var(--color-text-muted)]">
-                {videos.length}개의 후보 · 점수 높은 순
+              <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-2">
+                <span>{videos.length}개의 후보 · 점수 높은 순</span>
+                {fromCache && (
+                  <span
+                    className="px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-[10px] border border-[var(--color-accent)]/30"
+                    title="이전 검색 결과를 재사용 중 (30일 내)"
+                  >
+                    ⚡ 캐시
+                  </span>
+                )}
               </div>
               <button
                 onClick={() => onEnqueueAll(videos, game)}

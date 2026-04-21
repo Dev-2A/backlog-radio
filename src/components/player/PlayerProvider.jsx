@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef } from "react";
 import useYouTubePlayer from "@/hooks/useYouTubePlayer";
 import useQueue from "@/hooks/useQueue";
 import { YT_STATE } from "@/lib/youtubePlayer";
+import { addHistoryEntry } from "@/lib/history";
 import MiniPlayer from "./MiniPlayer";
 import KeyboardShortcuts from "./KeyboardShortcuts";
 
@@ -15,7 +16,10 @@ export function PlayerProvider({ children }) {
   const queue = useQueue();
   const lastPlayedRef = useRef(null);
 
-  // 큐의 현재 아이템이 바뀌면 자동 재생
+  // 히스토리 중복 방지 (같은 곡을 30초 안에 여러 번 기록 X)
+  const lastHistoryRef = useRef({ videoId: null, at: 0 });
+
+  // 큐의 현재 아이템이 바뀌면 자동 재생 + 히스토리 기록
   useEffect(() => {
     if (!player.ready) return;
     const item = queue.currentItem;
@@ -36,6 +40,28 @@ export function PlayerProvider({ children }) {
           },
         }),
       );
+
+      // 🆕 히스토리에 기록 (30초 중복 방지)
+      const now = Date.now();
+      const last = lastHistoryRef.current;
+      const isDuplicate =
+        last.videoId === item.videoId && now - last.at < 30_000;
+
+      if (!isDuplicate) {
+        addHistoryEntry({
+          videoId: item.videoId,
+          title: item.title,
+          channel: item.channel,
+          thumbnail: item.thumbnail,
+          durationSeconds: item.durationSeconds,
+          gameName: item.gameName,
+          appId: item.appId,
+        });
+        lastHistoryRef.current = { videoId: item.videoId, at: now };
+
+        // 히스토리 페이지가 열려있을 수 있으니 알림
+        window.dispatchEvent(new CustomEvent("backlog-radio:history-updated"));
+      }
     }
   }, [player.ready, queue.currentItem, player]);
 
@@ -75,7 +101,6 @@ export function PlayerProvider({ children }) {
         addToQueue,
       }}
     >
-      {/* 플레이어 래퍼 — 화면 밖에 숨겨둠 (음악만 들림) */}
       <div
         ref={wrapperRef}
         aria-hidden="true"
